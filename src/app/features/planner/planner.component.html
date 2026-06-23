@@ -4,6 +4,58 @@
     <p class="planner__subtitle">Organisez vos déjeuners et dîners pour la semaine</p>
   </header>
 
+  <div class="planner__toolbar">
+    <nav class="planner__week-nav" aria-label="Navigation par semaine">
+      <button
+        type="button"
+        class="planner__nav-btn"
+        (click)="previousWeek()"
+        aria-label="Semaine précédente"
+      >
+        ‹
+      </button>
+      <button
+        type="button"
+        class="planner__week-label"
+        [class.planner__week-label--current]="isCurrentWeek()"
+        (click)="goToCurrentWeek()"
+        [attr.aria-current]="isCurrentWeek() ? 'date' : null"
+        aria-label="Revenir à la semaine en cours"
+      >
+        {{ weekLabel() }}
+      </button>
+      <button
+        type="button"
+        class="planner__nav-btn"
+        (click)="nextWeek()"
+        aria-label="Semaine suivante"
+      >
+        ›
+      </button>
+    </nav>
+
+    <div class="planner__stats" aria-label="Statistiques de la semaine">
+      <div class="planner__stat-card">
+        <span class="planner__stat-value">
+          {{ weekStats().plannedCount }}/{{ weekStats().maxSlots }}
+        </span>
+        <span class="planner__stat-label">Repas planifiés</span>
+      </div>
+      <div class="planner__stat-card">
+        <span class="planner__stat-value">{{ weekStats().uniqueRecipes }}</span>
+        <span class="planner__stat-label">Recettes différentes</span>
+      </div>
+      <div class="planner__stat-card">
+        <span class="planner__stat-value">{{ weekStats().avgCaloriesPerMeal }}</span>
+        <span class="planner__stat-label">Cal. moy. / repas</span>
+      </div>
+      <div class="planner__stat-card">
+        <span class="planner__stat-value">{{ weekStats().totalCalories }}</span>
+        <span class="planner__stat-label">Total calorique</span>
+      </div>
+    </div>
+  </div>
+
   <div class="planner__layout">
     <section class="planner__grid-section" aria-label="Planning hebdomadaire">
       <div class="planner__grid-scroll">
