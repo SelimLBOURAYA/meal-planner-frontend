@@ -4,7 +4,37 @@
     <p class="planner__subtitle">Organisez vos déjeuners et dîners pour la semaine</p>
   </header>
 
-  <section class="planner__placeholder" aria-label="Zone de planning">
-    <p>La grille de planning hebdomadaire sera affichée ici.</p>
+  <section class="planner__grid-section" aria-label="Planning hebdomadaire">
+    <div class="planner__grid-scroll">
+      <div class="planner__grid">
+        <div class="planner__corner" aria-hidden="true"></div>
+
+        @for (day of weekDays(); track day.dateKey) {
+          <div
+            class="planner__day-header"
+            [class.planner__day-header--today]="day.isToday"
+          >
+            <span class="planner__day-name">{{ day.dayName }}</span>
+            <span class="planner__day-date">{{ day.dayNumber }}</span>
+          </div>
+        }
+
+        @for (mealType of mealTypes; track mealType) {
+          <div class="planner__meal-label">
+            <span class="planner__meal-icon" aria-hidden="true">{{
+              mealTypeIcons[mealType]
+            }}</span>
+            <span class="planner__meal-name">{{ mealTypeLabels[mealType] }}</span>
+          </div>
+
+          @for (day of weekDays(); track day.dateKey) {
+            <app-meal-slot
+              [recipe]="getRecipeForSlot(day.dateKey, mealType)"
+              [selected]="isSlotSelected(day.dateKey, mealType)"
+            />
+          }
+        }
+      </div>
+    </div>
   </section>
 </main>
