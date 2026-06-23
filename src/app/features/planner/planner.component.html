@@ -104,6 +104,9 @@
                 [recipe]="getRecipeForSlot(day.dateKey, mealType)"
                 [selected]="isSlotSelected(day.dateKey, mealType)"
                 (recipeSelect)="onRecipeSelect($event)"
+                (emptySlotClick)="openPicker(day.dateKey, mealType)"
+                (replaceClick)="onReplaceMeal(day.dateKey, mealType)"
+                (removeClick)="onRemoveMeal(day.dateKey, mealType)"
               />
             }
           }
@@ -116,3 +119,13 @@
 
   <app-shopping-list />
 </main>
+
+@if (pickerContext(); as context) {
+  <app-meal-picker
+    [dateKey]="context.dateKey"
+    [mealType]="context.mealType"
+    [dayLabel]="context.dayLabel"
+    (close)="closePicker()"
+    (assign)="onAssignMeal($event)"
+  />
+}
