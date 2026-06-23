@@ -5,6 +5,7 @@
     [class.meal-slot--selected]="selected()"
     [attr.aria-pressed]="selected()"
     [attr.aria-label]="meal.name"
+    (click)="onFilledSlotClick(meal)"
   >
     <span class="meal-slot__emoji" aria-hidden="true">{{ meal.emoji }}</span>
     <span class="meal-slot__name">{{ meal.name }}</span>

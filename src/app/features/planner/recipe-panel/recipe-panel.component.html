@@ -1,0 +1,54 @@
+<aside class="recipe-panel" aria-label="Détail de la recette">
+  @if (selectedRecipe(); as recipe) {
+    <div class="recipe-panel__content">
+      <header class="recipe-panel__header">
+        <span class="recipe-panel__emoji" aria-hidden="true">{{ recipe.emoji }}</span>
+        <h2 class="recipe-panel__title">{{ recipe.name }}</h2>
+      </header>
+
+      <p class="recipe-panel__description">{{ recipe.description }}</p>
+
+      @if (recipe.tags.length > 0) {
+        <ul class="recipe-panel__tags" aria-label="Tags">
+          @for (tag of recipe.tags; track tag) {
+            <li class="recipe-panel__tag">{{ tag }}</li>
+          }
+        </ul>
+      }
+
+      <dl class="recipe-panel__meta">
+        <div class="recipe-panel__meta-item">
+          <dt>Temps</dt>
+          <dd>{{ totalDuration(recipe) }} min</dd>
+        </div>
+        <div class="recipe-panel__meta-item">
+          <dt>Portions</dt>
+          <dd>{{ recipe.baseServings }}</dd>
+        </div>
+        <div class="recipe-panel__meta-item">
+          <dt>Calories</dt>
+          <dd>{{ recipe.calories }} kcal</dd>
+        </div>
+      </dl>
+
+      <section class="recipe-panel__ingredients" aria-labelledby="ingredients-heading">
+        <h3 id="ingredients-heading" class="recipe-panel__section-title">Ingrédients</h3>
+        <ul class="recipe-panel__ingredient-list">
+          @for (ingredient of recipe.ingredients; track ingredient.name) {
+            <li class="recipe-panel__ingredient">
+              <span class="recipe-panel__quantity">{{ ingredient.quantity }} {{ ingredient.unit }}</span>
+              <span class="recipe-panel__ingredient-name">{{ ingredient.name }}</span>
+            </li>
+          }
+        </ul>
+      </section>
+    </div>
+  } @else {
+    <div class="recipe-panel__empty">
+      <span class="recipe-panel__empty-icon" aria-hidden="true">👆</span>
+      <p class="recipe-panel__empty-text">
+        Sélectionnez un repas planifié pour afficher le détail de la recette.
+      </p>
+    </div>
+  }
+</aside>
