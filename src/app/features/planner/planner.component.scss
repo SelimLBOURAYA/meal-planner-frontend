@@ -1,0 +1,35 @@
+.planner {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
+}
+
+.planner__header {
+  margin-bottom: 2rem;
+}
+
+.planner__title {
+  margin: 0 0 0.5rem;
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--color-primary);
+}
+
+.planner__subtitle {
+  margin: 0;
+  color: var(--color-text-muted);
+}
+
+.planner__placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 320px;
+  padding: 2rem;
+  background: var(--color-surface);
+  border: 2px dashed var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  color: var(--color-text-muted);
+  text-align: center;
+}
