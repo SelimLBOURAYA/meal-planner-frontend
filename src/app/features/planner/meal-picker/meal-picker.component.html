@@ -1,0 +1,96 @@
+<div
+  class="meal-picker-backdrop"
+  role="presentation"
+  (click)="onBackdropClick($event)"
+>
+  <div
+    class="meal-picker"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="meal-picker-title"
+  >
+    <header class="meal-picker__header">
+      <div>
+        <h2 id="meal-picker-title" class="meal-picker__title">
+          Choisir une recette
+        </h2>
+        <p class="meal-picker__context">
+          {{ dayLabel() }} – {{ mealTypeLabels[mealType()] }}
+        </p>
+      </div>
+      <button
+        type="button"
+        class="meal-picker__close"
+        (click)="close.emit()"
+        aria-label="Fermer"
+      >
+        ×
+      </button>
+    </header>
+
+    <div class="meal-picker__search">
+      <label class="meal-picker__search-label" for="meal-picker-search">
+        Rechercher
+      </label>
+      <input
+        #searchInput
+        id="meal-picker-search"
+        type="search"
+        class="meal-picker__search-input"
+        placeholder="Filtrer par nom ou tag…"
+        [value]="searchQuery()"
+        (input)="onSearchInput($event)"
+        autocomplete="off"
+      />
+    </div>
+
+    @if (filteredRecipes().length === 0) {
+      <p class="meal-picker__empty" role="status">
+        Aucune recette ne correspond à votre recherche.
+      </p>
+    } @else {
+      <ul class="meal-picker__list" role="listbox" aria-label="Recettes locales">
+        @for (recipe of filteredRecipes(); track recipe.id) {
+          <li>
+            <button
+              type="button"
+              class="meal-picker__item"
+              [class.meal-picker__item--selected]="selectedRecipeId() === recipe.id"
+              role="option"
+              [attr.aria-selected]="selectedRecipeId() === recipe.id"
+              (click)="selectRecipe(recipe)"
+            >
+              <span class="meal-picker__emoji" aria-hidden="true">{{
+                recipe.emoji
+              }}</span>
+              <span class="meal-picker__info">
+                <span class="meal-picker__name">{{ recipe.name }}</span>
+                <span class="meal-picker__meta">
+                  {{ totalDuration(recipe) }} min · {{ recipe.calories }} kcal
+                </span>
+              </span>
+            </button>
+          </li>
+        }
+      </ul>
+    }
+
+    <footer class="meal-picker__footer">
+      <button
+        type="button"
+        class="meal-picker__cancel"
+        (click)="close.emit()"
+      >
+        Annuler
+      </button>
+      <button
+        type="button"
+        class="meal-picker__assign"
+        [disabled]="!selectedRecipeId()"
+        (click)="onAssign()"
+      >
+        Assigner à ce créneau
+      </button>
+    </footer>
+  </div>
+</div>

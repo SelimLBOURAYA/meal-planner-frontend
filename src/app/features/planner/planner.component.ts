@@ -9,6 +9,7 @@ import {
 } from '../../models/meal.models';
 import { MealPlannerService } from '../../services/meal-planner.service';
 import { MealSlotComponent } from './meal-slot/meal-slot.component';
+import { MealPickerComponent } from './meal-picker/meal-picker.component';
 import { RecipePanelComponent } from './recipe-panel/recipe-panel.component';
 import { ShoppingListComponent } from './shopping-list/shopping-list.component';
 
@@ -32,9 +33,21 @@ interface WeekDay {
   isToday: boolean;
 }
 
+interface PickerContext {
+  dateKey: string;
+  mealType: MealType;
+  dayLabel: string;
+}
+
 @Component({
   selector: 'app-planner',
-  imports: [MealSlotComponent, RecipePanelComponent, ShoppingListComponent, RouterLink],
+  imports: [
+    MealSlotComponent,
+    MealPickerComponent,
+    RecipePanelComponent,
+    ShoppingListComponent,
+    RouterLink,
+  ],
   templateUrl: './planner.component.html',
   styleUrl: './planner.component.scss',
 })
@@ -44,6 +57,7 @@ export class PlannerComponent implements OnInit {
   private readonly router = inject(Router);
 
   readonly createdRecipeName = signal<string | null>(null);
+  readonly pickerContext = signal<PickerContext | null>(null);
 
   readonly mealTypeLabels = MEAL_TYPE_LABELS;
   readonly mealTypeIcons = MEAL_TYPE_ICONS;
@@ -83,6 +97,37 @@ export class PlannerComponent implements OnInit {
 
   onRecipeSelect(recipeId: string): void {
     this.planner.selectRecipe(recipeId);
+  }
+
+  openPicker(dateKey: string, mealType: MealType): void {
+    const day = this.weekDays().find((item) => item.dateKey === dateKey);
+    const dayLabel = day
+      ? `${day.dayName} ${day.dayNumber}`
+      : dateKey;
+
+    this.pickerContext.set({ dateKey, mealType, dayLabel });
+  }
+
+  closePicker(): void {
+    this.pickerContext.set(null);
+  }
+
+  onAssignMeal(recipeId: string): void {
+    const context = this.pickerContext();
+    if (!context) {
+      return;
+    }
+
+    this.planner.assignMeal(context.dateKey, context.mealType, recipeId);
+    this.closePicker();
+  }
+
+  onReplaceMeal(dateKey: string, mealType: MealType): void {
+    this.openPicker(dateKey, mealType);
+  }
+
+  onRemoveMeal(dateKey: string, mealType: MealType): void {
+    this.planner.removeMeal(dateKey, mealType);
   }
 
   previousWeek(): void {

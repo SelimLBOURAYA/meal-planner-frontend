@@ -167,6 +167,42 @@ export class MealPlannerService {
       .sort((a, b) => a.name.localeCompare(b.name, 'fr'));
   }
 
+  assignMeal(dateKey: string, mealType: MealType, recipeId: string): void {
+    const meal: PlannedMeal = {
+      id: `planned-${dateKey}-${mealType}`,
+      date: dateKey,
+      mealType,
+      recipeId,
+    };
+
+    const existing = this.getMealForSlot(dateKey, mealType);
+
+    if (existing) {
+      this.plannedMeals.update((meals) =>
+        meals.map((item) => (item.id === existing.id ? meal : item)),
+      );
+    } else {
+      this.plannedMeals.update((meals) => [...meals, meal]);
+    }
+
+    this.selectRecipe(recipeId);
+  }
+
+  removeMeal(dateKey: string, mealType: MealType): void {
+    const existing = this.getMealForSlot(dateKey, mealType);
+    if (!existing) {
+      return;
+    }
+
+    this.plannedMeals.update((meals) =>
+      meals.filter((meal) => meal.id !== existing.id),
+    );
+
+    if (this.selectedRecipeId() === existing.recipeId) {
+      this.selectRecipe(null);
+    }
+  }
+
   addRecipe(recipe: Omit<Recipe, 'id'>): Recipe {
     const newRecipe: Recipe = {
       ...recipe,

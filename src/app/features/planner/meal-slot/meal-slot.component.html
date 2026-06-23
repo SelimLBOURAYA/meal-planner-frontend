@@ -1,24 +1,69 @@
 @if (recipe(); as meal) {
-  <button
-    type="button"
-    class="meal-slot meal-slot--filled"
-    [class.meal-slot--selected]="selected()"
-    [attr.aria-pressed]="selected()"
-    [attr.aria-label]="meal.name"
-    (click)="onFilledSlotClick(meal)"
+  <div
+    class="meal-slot-wrapper"
+    [class.meal-slot-wrapper--menu-open]="menuOpen()"
   >
-    <span class="meal-slot__emoji" aria-hidden="true">{{ meal.emoji }}</span>
-    <span class="meal-slot__name">{{ meal.name }}</span>
-    <span class="meal-slot__meta">
-      <span>{{ totalDuration(meal) }} min</span>
-      <span>{{ meal.calories }} kcal</span>
-    </span>
-  </button>
+    <button
+      type="button"
+      class="meal-slot meal-slot--filled"
+      [class.meal-slot--selected]="selected()"
+      [attr.aria-pressed]="selected()"
+      [attr.aria-label]="meal.name"
+      (click)="onFilledSlotClick(meal)"
+    >
+      <span class="meal-slot__emoji" aria-hidden="true">{{ meal.emoji }}</span>
+      <span class="meal-slot__name">{{ meal.name }}</span>
+      <span class="meal-slot__meta">
+        <span>{{ totalDuration(meal) }} min</span>
+        <span>{{ meal.calories }} kcal</span>
+      </span>
+    </button>
+
+    <div class="meal-slot__actions">
+      <button
+        type="button"
+        class="meal-slot__menu-btn"
+        [attr.aria-expanded]="menuOpen()"
+        aria-haspopup="menu"
+        aria-label="Actions du repas"
+        (click)="toggleMenu($event)"
+      >
+        ⋮
+      </button>
+
+      @if (menuOpen()) {
+        <div
+          class="meal-slot__menu"
+          role="menu"
+          (click)="$event.stopPropagation()"
+          (keydown.escape)="closeMenu()"
+        >
+          <button
+            type="button"
+            class="meal-slot__menu-item"
+            role="menuitem"
+            (click)="onReplace($event)"
+          >
+            Remplacer
+          </button>
+          <button
+            type="button"
+            class="meal-slot__menu-item meal-slot__menu-item--danger"
+            role="menuitem"
+            (click)="onRemove($event)"
+          >
+            Supprimer
+          </button>
+        </div>
+      }
+    </div>
+  </div>
 } @else {
   <button
     type="button"
     class="meal-slot meal-slot--empty"
     aria-label="Ajouter un repas"
+    (click)="onEmptySlotClick()"
   >
     <span class="meal-slot__add">+ Ajouter un repas</span>
   </button>
