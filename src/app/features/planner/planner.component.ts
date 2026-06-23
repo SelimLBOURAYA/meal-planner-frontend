@@ -42,6 +42,9 @@ export class PlannerComponent {
   readonly mealTypeLabels = MEAL_TYPE_LABELS;
   readonly mealTypeIcons = MEAL_TYPE_ICONS;
   readonly mealTypes = MEAL_TYPES;
+  readonly weekLabel = this.planner.weekLabel;
+  readonly weekStats = this.planner.weekStats;
+  readonly isCurrentWeek = computed(() => this.planner.weekOffset() === 0);
 
   readonly weekDays = computed<WeekDay[]>(() => {
     const monday = this.planner.getMondayOfCurrentWeek();
@@ -74,5 +77,17 @@ export class PlannerComponent {
 
   onRecipeSelect(recipeId: string): void {
     this.planner.selectRecipe(recipeId);
+  }
+
+  previousWeek(): void {
+    this.planner.previousWeek();
+  }
+
+  nextWeek(): void {
+    this.planner.nextWeek();
+  }
+
+  goToCurrentWeek(): void {
+    this.planner.goToCurrentWeek();
   }
 }

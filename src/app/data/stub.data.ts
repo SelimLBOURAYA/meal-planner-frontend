@@ -223,6 +223,30 @@ export const STUB_SHOPPING_LIST: ShoppingListItem[] = [
 
 const MEAL_TYPES: MealType[] = ['lunch', 'dinner'];
 
+const FRENCH_MONTHS = [
+  'janvier',
+  'février',
+  'mars',
+  'avril',
+  'mai',
+  'juin',
+  'juillet',
+  'août',
+  'septembre',
+  'octobre',
+  'novembre',
+  'décembre',
+] as const;
+
+export function formatWeekRange(start: Date, end: Date): string {
+  const startDay = start.getDate();
+  const startMonth = FRENCH_MONTHS[start.getMonth()];
+  const endDay = end.getDate();
+  const endMonth = FRENCH_MONTHS[end.getMonth()];
+
+  return `${startDay} ${startMonth} – ${endDay} ${endMonth}`;
+}
+
 export function toDateKey(date: Date): string {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, '0');

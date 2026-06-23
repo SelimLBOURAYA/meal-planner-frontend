@@ -43,3 +43,11 @@ export const MEAL_TYPE_ICONS: Record<MealType, string> = {
   lunch: '🍽️',
   dinner: '🌙',
 };
+
+export interface WeekStats {
+  plannedCount: number;
+  maxSlots: number;
+  uniqueRecipes: number;
+  avgCaloriesPerMeal: number;
+  totalCalories: number;
+}
