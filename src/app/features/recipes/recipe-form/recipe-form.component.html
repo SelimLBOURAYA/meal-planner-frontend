@@ -1,0 +1,166 @@
+<main class="recipe-form-page">
+  <header class="recipe-form-page__header">
+    <a routerLink="/" class="recipe-form-page__back">← Retour au planning</a>
+    <h1 class="recipe-form-page__title">Nouvelle recette</h1>
+    <p class="recipe-form-page__subtitle">
+      Ajoutez une recette avec des ingrédients quantifiés individuellement.
+    </p>
+  </header>
+
+  <form class="recipe-form" [formGroup]="form" (ngSubmit)="onSubmit()" novalidate>
+    <section class="recipe-form__section" aria-labelledby="recipe-info-heading">
+      <h2 id="recipe-info-heading" class="recipe-form__section-title">Informations</h2>
+
+      <div class="recipe-form__grid">
+        <div class="recipe-form__field recipe-form__field--wide">
+          <label for="recipe-name">Nom *</label>
+          <input
+            id="recipe-name"
+            type="text"
+            formControlName="name"
+            autocomplete="off"
+            [attr.aria-invalid]="form.controls.name.invalid && form.controls.name.touched"
+          />
+          @if (form.controls.name.invalid && form.controls.name.touched) {
+            <span class="recipe-form__error" role="alert">Le nom est obligatoire.</span>
+          }
+        </div>
+
+        <div class="recipe-form__field recipe-form__field--emoji">
+          <label for="recipe-emoji">Emoji</label>
+          <input
+            id="recipe-emoji"
+            type="text"
+            formControlName="emoji"
+            maxlength="4"
+            aria-label="Emoji de la recette"
+          />
+        </div>
+
+        <div class="recipe-form__field recipe-form__field--full">
+          <label for="recipe-description">Description</label>
+          <textarea
+            id="recipe-description"
+            formControlName="description"
+            rows="3"
+          ></textarea>
+        </div>
+
+        <div class="recipe-form__field">
+          <label for="recipe-prep-time">Préparation (min)</label>
+          <input
+            id="recipe-prep-time"
+            type="number"
+            formControlName="prepTime"
+            min="0"
+          />
+        </div>
+
+        <div class="recipe-form__field">
+          <label for="recipe-cook-time">Cuisson (min)</label>
+          <input
+            id="recipe-cook-time"
+            type="number"
+            formControlName="cookTime"
+            min="0"
+          />
+        </div>
+
+        <div class="recipe-form__field">
+          <label for="recipe-servings">Portions</label>
+          <input
+            id="recipe-servings"
+            type="number"
+            formControlName="baseServings"
+            min="1"
+          />
+        </div>
+
+        <div class="recipe-form__field">
+          <label for="recipe-calories">Calories (kcal)</label>
+          <input
+            id="recipe-calories"
+            type="number"
+            formControlName="calories"
+            min="0"
+          />
+        </div>
+      </div>
+    </section>
+
+    <section class="recipe-form__section" aria-labelledby="ingredients-heading">
+      <div class="recipe-form__section-header">
+        <h2 id="ingredients-heading" class="recipe-form__section-title">Ingrédients</h2>
+        <button
+          type="button"
+          class="recipe-form__add-btn"
+          (click)="addIngredient()"
+        >
+          + Ajouter un ingrédient
+        </button>
+      </div>
+
+      @if (ingredients.errors?.['required'] && ingredients.touched) {
+        <p class="recipe-form__error" role="alert">
+          Ajoutez au moins un ingrédient avec une quantité supérieure à 0.
+        </p>
+      }
+
+      <div class="recipe-form__ingredients" formArrayName="ingredients">
+        @for (group of ingredients.controls; track $index) {
+          <div class="recipe-form__ingredient-row" [formGroupName]="$index">
+            <div class="recipe-form__field">
+              <label [for]="'ingredient-name-' + $index">Nom</label>
+              <input
+                [id]="'ingredient-name-' + $index"
+                type="text"
+                formControlName="name"
+                [attr.aria-invalid]="ingredientError($index, 'name')"
+              />
+            </div>
+
+            <div class="recipe-form__field recipe-form__field--quantity">
+              <label [for]="'ingredient-quantity-' + $index">Quantité</label>
+              <input
+                [id]="'ingredient-quantity-' + $index"
+                type="number"
+                formControlName="quantity"
+                min="0.01"
+                step="any"
+                [attr.aria-invalid]="ingredientError($index, 'quantity')"
+              />
+            </div>
+
+            <div class="recipe-form__field recipe-form__field--unit">
+              <label [for]="'ingredient-unit-' + $index">Unité</label>
+              <select
+                [id]="'ingredient-unit-' + $index"
+                formControlName="unit"
+                [attr.aria-invalid]="ingredientError($index, 'unit')"
+              >
+                @for (unit of ingredientUnits; track unit) {
+                  <option [value]="unit">{{ unit }}</option>
+                }
+              </select>
+            </div>
+
+            <button
+              type="button"
+              class="recipe-form__remove-btn"
+              (click)="removeIngredient($index)"
+              [disabled]="ingredients.length === 1"
+              [attr.aria-label]="'Supprimer l\'ingrédient ' + ($index + 1)"
+            >
+              Supprimer
+            </button>
+          </div>
+        }
+      </div>
+    </section>
+
+    <footer class="recipe-form__actions">
+      <a routerLink="/" class="recipe-form__cancel">Annuler</a>
+      <button type="submit" class="recipe-form__submit">Créer la recette</button>
+    </footer>
+  </form>
+</main>
