@@ -8,6 +8,7 @@ import {
 } from '../../models/meal.models';
 import { MealPlannerService } from '../../services/meal-planner.service';
 import { MealSlotComponent } from './meal-slot/meal-slot.component';
+import { RecipePanelComponent } from './recipe-panel/recipe-panel.component';
 
 const DAY_NAMES = [
   'Lundi',
@@ -31,7 +32,7 @@ interface WeekDay {
 
 @Component({
   selector: 'app-planner',
-  imports: [MealSlotComponent],
+  imports: [MealSlotComponent, RecipePanelComponent],
   templateUrl: './planner.component.html',
   styleUrl: './planner.component.scss',
 })
@@ -69,5 +70,9 @@ export class PlannerComponent {
   isSlotSelected(dateKey: string, mealType: MealType): boolean {
     const meal = this.planner.getMealForSlot(dateKey, mealType);
     return !!meal && this.planner.selectedRecipeId() === meal.recipeId;
+  }
+
+  onRecipeSelect(recipeId: string): void {
+    this.planner.selectRecipe(recipeId);
   }
 }
