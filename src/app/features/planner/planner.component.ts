@@ -9,6 +9,7 @@ import {
 import { MealPlannerService } from '../../services/meal-planner.service';
 import { MealSlotComponent } from './meal-slot/meal-slot.component';
 import { RecipePanelComponent } from './recipe-panel/recipe-panel.component';
+import { ShoppingListComponent } from './shopping-list/shopping-list.component';
 
 const DAY_NAMES = [
   'Lundi',
@@ -32,7 +33,7 @@ interface WeekDay {
 
 @Component({
   selector: 'app-planner',
-  imports: [MealSlotComponent, RecipePanelComponent],
+  imports: [MealSlotComponent, RecipePanelComponent, ShoppingListComponent],
   templateUrl: './planner.component.html',
   styleUrl: './planner.component.scss',
 })

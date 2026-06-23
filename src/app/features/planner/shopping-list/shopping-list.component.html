@@ -1,0 +1,45 @@
+<section class="shopping-list" aria-labelledby="shopping-list-title">
+  <header class="shopping-list__header">
+    <h2 id="shopping-list-title" class="shopping-list__title">Liste de courses</h2>
+    <span class="shopping-list__progress-label" aria-live="polite">
+      {{ progress().checked }}/{{ progress().total }} articles
+    </span>
+  </header>
+
+  <div
+    class="shopping-list__progress-bar"
+    role="progressbar"
+    [attr.aria-valuenow]="progress().checked"
+    [attr.aria-valuemin]="0"
+    [attr.aria-valuemax]="progress().total"
+    [attr.aria-label]="'Progression : ' + progress().checked + ' sur ' + progress().total + ' articles cochés'"
+  >
+    <div
+      class="shopping-list__progress-fill"
+      [style.width.%]="progress().percent"
+    ></div>
+  </div>
+
+  @if (items().length === 0) {
+    <p class="shopping-list__empty">Aucun ingrédient pour cette semaine.</p>
+  } @else {
+    <ul class="shopping-list__items">
+      @for (item of items(); track item.id) {
+        <li class="shopping-list__item" [class.shopping-list__item--checked]="item.checked">
+          <label class="shopping-list__label">
+            <input
+              type="checkbox"
+              class="shopping-list__checkbox"
+              [checked]="item.checked"
+              (change)="toggleItem(item.id)"
+            />
+            <span class="shopping-list__text">
+              <span class="shopping-list__quantity">{{ formatQuantity(item) }}</span>
+              {{ item.name }}
+            </span>
+          </label>
+        </li>
+      }
+    </ul>
+  }
+</section>

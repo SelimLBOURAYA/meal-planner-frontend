@@ -7,7 +7,14 @@ import {
   STUB_RECIPES,
   toDateKey,
 } from '../data/stub.data';
-import { MealType, PlannedMeal, Recipe, WeekStats } from '../models/meal.models';
+import {
+  Ingredient,
+  MealType,
+  PlannedMeal,
+  Recipe,
+  ShoppingListItem,
+  WeekStats,
+} from '../models/meal.models';
 
 const MAX_WEEK_SLOTS = 14;
 
@@ -19,6 +26,7 @@ export class MealPlannerService {
   readonly plannedMeals = signal<PlannedMeal[]>(
     generateStubPlan(new Date()),
   );
+  readonly shoppingCheckedIds = signal<Set<string>>(new Set());
 
   readonly selectedRecipe = computed(() => {
     const recipeId = this.selectedRecipeId();
@@ -57,6 +65,31 @@ export class MealPlannerService {
       avgCaloriesPerMeal:
         plannedCount > 0 ? Math.round(totalCalories / plannedCount) : 0,
       totalCalories,
+    };
+  });
+
+  readonly shoppingList = computed((): ShoppingListItem[] => {
+    const dateKeys = new Set(this.getWeekDateKeys());
+    const recipeIds = this.plannedMeals()
+      .filter((meal) => dateKeys.has(meal.date))
+      .map((meal) => meal.recipeId);
+    const checkedIds = this.shoppingCheckedIds();
+    const aggregated = this.aggregateIngredients(recipeIds);
+
+    return aggregated.map((item) => ({
+      ...item,
+      checked: checkedIds.has(item.id),
+    }));
+  });
+
+  readonly shoppingListProgress = computed(() => {
+    const items = this.shoppingList();
+    const checkedCount = items.filter((item) => item.checked).length;
+
+    return {
+      checked: checkedCount,
+      total: items.length,
+      percent: items.length > 0 ? Math.round((checkedCount / items.length) * 100) : 0,
     };
   });
 
@@ -101,5 +134,54 @@ export class MealPlannerService {
       date.setDate(monday.getDate() + index);
       return toDateKey(date);
     });
+  }
+
+  aggregateIngredients(recipeIds: string[]): Omit<ShoppingListItem, 'checked'>[] {
+    const merged = new Map<string, Ingredient>();
+
+    for (const recipeId of recipeIds) {
+      const recipe = this.getRecipe(recipeId);
+      if (!recipe) {
+        continue;
+      }
+
+      for (const ingredient of recipe.ingredients) {
+        const key = this.ingredientKey(ingredient.name, ingredient.unit);
+        const existing = merged.get(key);
+
+        if (existing) {
+          existing.quantity += ingredient.quantity;
+        } else {
+          merged.set(key, { ...ingredient });
+        }
+      }
+    }
+
+    return Array.from(merged.entries())
+      .map(([id, ingredient]) => ({
+        id,
+        name: ingredient.name,
+        quantity: ingredient.quantity,
+        unit: ingredient.unit,
+      }))
+      .sort((a, b) => a.name.localeCompare(b.name, 'fr'));
+  }
+
+  toggleShoppingItem(itemId: string): void {
+    this.shoppingCheckedIds.update((checked) => {
+      const next = new Set(checked);
+
+      if (next.has(itemId)) {
+        next.delete(itemId);
+      } else {
+        next.add(itemId);
+      }
+
+      return next;
+    });
+  }
+
+  private ingredientKey(name: string, unit: string): string {
+    return `${name.trim().toLowerCase()}|${unit.trim().toLowerCase()}`;
   }
 }
