@@ -1,0 +1,24 @@
+@if (recipe(); as meal) {
+  <button
+    type="button"
+    class="meal-slot meal-slot--filled"
+    [class.meal-slot--selected]="selected()"
+    [attr.aria-pressed]="selected()"
+    [attr.aria-label]="meal.name"
+  >
+    <span class="meal-slot__emoji" aria-hidden="true">{{ meal.emoji }}</span>
+    <span class="meal-slot__name">{{ meal.name }}</span>
+    <span class="meal-slot__meta">
+      <span>{{ totalDuration(meal) }} min</span>
+      <span>{{ meal.calories }} kcal</span>
+    </span>
+  </button>
+} @else {
+  <button
+    type="button"
+    class="meal-slot meal-slot--empty"
+    aria-label="Ajouter un repas"
+  >
+    <span class="meal-slot__add">+ Ajouter un repas</span>
+  </button>
+}
