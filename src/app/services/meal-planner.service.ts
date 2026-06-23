@@ -167,6 +167,16 @@ export class MealPlannerService {
       .sort((a, b) => a.name.localeCompare(b.name, 'fr'));
   }
 
+  addRecipe(recipe: Omit<Recipe, 'id'>): Recipe {
+    const newRecipe: Recipe = {
+      ...recipe,
+      id: this.generateRecipeId(),
+    };
+
+    this.recipes.update((recipes) => [...recipes, newRecipe]);
+    return newRecipe;
+  }
+
   toggleShoppingItem(itemId: string): void {
     this.shoppingCheckedIds.update((checked) => {
       const next = new Set(checked);
@@ -183,5 +193,16 @@ export class MealPlannerService {
 
   private ingredientKey(name: string, unit: string): string {
     return `${name.trim().toLowerCase()}|${unit.trim().toLowerCase()}`;
+  }
+
+  private generateRecipeId(): string {
+    const existingIds = new Set(this.recipes().map((recipe) => recipe.id));
+
+    do {
+      const id = `recipe-user-${crypto.randomUUID()}`;
+      if (!existingIds.has(id)) {
+        return id;
+      }
+    } while (true);
   }
 }

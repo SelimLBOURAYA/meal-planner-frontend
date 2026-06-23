@@ -9,6 +9,13 @@ export const routes: Routes = [
       ),
   },
   {
+    path: 'recipes/new',
+    loadComponent: () =>
+      import('./features/recipes/recipe-form/recipe-form.component').then(
+        (m) => m.RecipeFormComponent,
+      ),
+  },
+  {
     path: '**',
     redirectTo: '',
   },

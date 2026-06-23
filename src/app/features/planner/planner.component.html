@@ -1,8 +1,27 @@
 <main class="planner">
   <header class="planner__header">
-    <h1 class="planner__title">Planificateur de repas</h1>
-    <p class="planner__subtitle">Organisez vos déjeuners et dîners pour la semaine</p>
+    <div class="planner__header-top">
+      <div>
+        <h1 class="planner__title">Planificateur de repas</h1>
+        <p class="planner__subtitle">Organisez vos déjeuners et dîners pour la semaine</p>
+      </div>
+      <a routerLink="/recipes/new" class="planner__new-recipe">+ Nouvelle recette</a>
+    </div>
   </header>
+
+  @if (createdRecipeName(); as recipeName) {
+    <div class="planner__toast" role="status" aria-live="polite">
+      <span>Recette « {{ recipeName }} » créée avec succès.</span>
+      <button
+        type="button"
+        class="planner__toast-dismiss"
+        (click)="dismissCreatedMessage()"
+        aria-label="Fermer le message"
+      >
+        ×
+      </button>
+    </div>
+  }
 
   <div class="planner__toolbar">
     <nav class="planner__week-nav" aria-label="Navigation par semaine">
