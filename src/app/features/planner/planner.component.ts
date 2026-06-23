@@ -1,4 +1,5 @@
-import { Component, computed, inject } from '@angular/core';
+import { Component, computed, inject, OnInit, signal } from '@angular/core';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 
 import { toDateKey } from '../../data/stub.data';
 import {
@@ -33,12 +34,16 @@ interface WeekDay {
 
 @Component({
   selector: 'app-planner',
-  imports: [MealSlotComponent, RecipePanelComponent, ShoppingListComponent],
+  imports: [MealSlotComponent, RecipePanelComponent, ShoppingListComponent, RouterLink],
   templateUrl: './planner.component.html',
   styleUrl: './planner.component.scss',
 })
-export class PlannerComponent {
+export class PlannerComponent implements OnInit {
   private readonly planner = inject(MealPlannerService);
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
+
+  readonly createdRecipeName = signal<string | null>(null);
 
   readonly mealTypeLabels = MEAL_TYPE_LABELS;
   readonly mealTypeIcons = MEAL_TYPE_ICONS;
@@ -90,5 +95,23 @@ export class PlannerComponent {
 
   goToCurrentWeek(): void {
     this.planner.goToCurrentWeek();
+  }
+
+  ngOnInit(): void {
+    const createdId = this.route.snapshot.queryParamMap.get('created');
+
+    if (createdId) {
+      const recipe = this.planner.getRecipe(createdId);
+      this.createdRecipeName.set(recipe?.name ?? 'Votre recette');
+      void this.router.navigate([], {
+        queryParams: { created: null },
+        queryParamsHandling: 'merge',
+        replaceUrl: true,
+      });
+    }
+  }
+
+  dismissCreatedMessage(): void {
+    this.createdRecipeName.set(null);
   }
 }
