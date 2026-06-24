@@ -23,6 +23,25 @@
     </div>
   }
 
+  @if (feedbackMessage(); as feedback) {
+    <div
+      class="planner__toast"
+      [class.planner__toast--error]="feedback.type === 'error'"
+      [attr.role]="feedback.type === 'error' ? 'alert' : 'status'"
+      aria-live="polite"
+    >
+      <span>{{ feedback.text }}</span>
+      <button
+        type="button"
+        class="planner__toast-dismiss"
+        (click)="dismissFeedback()"
+        aria-label="Fermer le message"
+      >
+        ×
+      </button>
+    </div>
+  }
+
   <div class="planner__toolbar">
     <nav class="planner__week-nav" aria-label="Navigation par semaine">
       <button
@@ -114,7 +133,10 @@
       </div>
     </section>
 
-    <app-recipe-panel />
+    <app-recipe-panel
+      (close)="onCloseRecipePanel()"
+      (deleteRecipe)="onDeleteRecipe($event)"
+    />
   </div>
 
   <app-shopping-list />

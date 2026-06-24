@@ -1,9 +1,35 @@
-<aside class="recipe-panel" aria-label="Détail de la recette">
+@if (selectedRecipe(); as recipe) {
+  <div
+    class="recipe-panel-backdrop"
+    role="presentation"
+    (click)="onClose()"
+  ></div>
+}
+
+<aside
+  class="recipe-panel"
+  [class.recipe-panel--open]="!!selectedRecipe()"
+  aria-label="Détail de la recette"
+  [attr.aria-hidden]="!selectedRecipe()"
+>
   @if (selectedRecipe(); as recipe) {
-    <div class="recipe-panel__content">
+    <div
+      class="recipe-panel__content"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="recipe-panel-title"
+    >
       <header class="recipe-panel__header">
         <span class="recipe-panel__emoji" aria-hidden="true">{{ recipe.emoji }}</span>
-        <h2 class="recipe-panel__title">{{ recipe.name }}</h2>
+        <h2 id="recipe-panel-title" class="recipe-panel__title">{{ recipe.name }}</h2>
+        <button
+          type="button"
+          class="recipe-panel__close"
+          (click)="onClose()"
+          aria-label="Fermer le détail de la recette"
+        >
+          ×
+        </button>
       </header>
 
       <p class="recipe-panel__description">{{ recipe.description }}</p>
@@ -42,6 +68,18 @@
           }
         </ul>
       </section>
+
+      @if (canDelete(recipe)) {
+        <footer class="recipe-panel__footer">
+          <button
+            type="button"
+            class="recipe-panel__delete"
+            (click)="onDelete(recipe)"
+          >
+            Supprimer cette recette
+          </button>
+        </footer>
+      }
     </div>
   } @else {
     <div class="recipe-panel__empty">

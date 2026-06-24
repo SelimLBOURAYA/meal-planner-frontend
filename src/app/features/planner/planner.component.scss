@@ -59,6 +59,12 @@
   color: var(--color-primary);
   font-size: 0.9375rem;
   font-weight: 600;
+
+  &--error {
+    background: #fdecea;
+    border-color: #e74c3c;
+    color: #c0392b;
+  }
 }
 
 .planner__toast-dismiss {
@@ -71,17 +77,17 @@
   border: none;
   border-radius: var(--radius-sm);
   background: transparent;
-  color: var(--color-primary);
+  color: inherit;
   font-size: 1.25rem;
   line-height: 1;
   cursor: pointer;
 
   &:hover {
-    background: rgba(45, 106, 79, 0.12);
+    background: rgba(0, 0, 0, 0.06);
   }
 
   &:focus-visible {
-    outline: 2px solid var(--color-primary);
+    outline: 2px solid currentColor;
     outline-offset: 2px;
   }
 }
@@ -287,6 +293,10 @@
 @media (max-width: 960px) {
   .planner__layout {
     grid-template-columns: 1fr;
+  }
+
+  .planner__layout > app-recipe-panel {
+    display: contents;
   }
 }
 

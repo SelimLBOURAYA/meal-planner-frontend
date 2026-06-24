@@ -1,3 +1,7 @@
+.recipe-panel-backdrop {
+  display: none;
+}
+
 .recipe-panel {
   background: var(--color-surface);
   border-radius: var(--radius-lg);
@@ -25,10 +29,38 @@
 
 .recipe-panel__title {
   margin: 0;
+  flex: 1;
   font-size: 1.25rem;
   font-weight: 700;
   color: var(--color-primary);
   line-height: 1.3;
+}
+
+.recipe-panel__close {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--color-text-muted);
+  font-size: 1.5rem;
+  line-height: 1;
+  cursor: pointer;
+  flex-shrink: 0;
+
+  &:hover {
+    background: var(--color-bg);
+    color: var(--color-text);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+  }
 }
 
 .recipe-panel__description {
@@ -130,6 +162,35 @@
   color: var(--color-text);
 }
 
+.recipe-panel__footer {
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--color-border);
+}
+
+.recipe-panel__delete {
+  width: 100%;
+  padding: 0.625rem 1rem;
+  border: 1px solid #c0392b;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: #c0392b;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+
+  &:hover {
+    background: #c0392b;
+    color: #fff;
+  }
+
+  &:focus-visible {
+    outline: 2px solid #c0392b;
+    outline-offset: 2px;
+  }
+}
+
 .recipe-panel__empty {
   display: flex;
   flex-direction: column;
@@ -152,4 +213,38 @@
   font-size: 0.9375rem;
   color: var(--color-text-muted);
   line-height: 1.5;
+}
+
+@media (max-width: 960px) {
+  .recipe-panel-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 90;
+    background: rgba(0, 0, 0, 0.4);
+  }
+
+  .recipe-panel {
+    position: fixed;
+    inset: auto 0 0 0;
+    z-index: 100;
+    max-height: 85vh;
+    min-height: 0;
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    transform: translateY(100%);
+    transition: transform 0.25s ease;
+    overflow-y: auto;
+  }
+
+  .recipe-panel--open {
+    transform: translateY(0);
+  }
+
+  .recipe-panel__close {
+    display: flex;
+  }
+
+  .recipe-panel__empty {
+    display: none;
+  }
 }

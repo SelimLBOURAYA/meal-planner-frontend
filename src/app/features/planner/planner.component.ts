@@ -58,6 +58,7 @@ export class PlannerComponent implements OnInit {
   private readonly router = inject(Router);
 
   readonly createdRecipeName = signal<string | null>(null);
+  readonly feedbackMessage = signal<{ text: string; type: 'success' | 'error' } | null>(null);
   readonly pickerContext = signal<PickerContext | null>(null);
 
   readonly mealTypeLabels = MEAL_TYPE_LABELS;
@@ -143,7 +144,49 @@ export class PlannerComponent implements OnInit {
   }
 
   onRemoveMeal(dateKey: string, mealType: MealType): void {
+    const meal = this.planner.getMealForSlot(dateKey, mealType);
+    const recipe = meal ? this.planner.getRecipe(meal.recipeId) : undefined;
+    const recipeName = recipe?.name ?? 'ce repas';
+    const mealLabel = this.mealTypeLabels[mealType].toLowerCase();
+
+    const confirmed = window.confirm(
+      `Vider le créneau ${mealLabel} pour « ${recipeName} » ?`,
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
     this.planner.removeMeal(dateKey, mealType);
+    this.showFeedback('Créneau vidé.', 'success');
+  }
+
+  onCloseRecipePanel(): void {
+    this.planner.selectRecipe(null);
+  }
+
+  onDeleteRecipe(recipeId: string): void {
+    const recipe = this.planner.getRecipe(recipeId);
+    if (!recipe) {
+      return;
+    }
+
+    const confirmed = window.confirm(
+      `Supprimer définitivement la recette « ${recipe.name} » ?`,
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    const result = this.planner.deleteRecipe(recipeId);
+
+    if (result.success) {
+      this.showFeedback(`Recette « ${recipe.name} » supprimée.`, 'success');
+      return;
+    }
+
+    this.showFeedback(result.error ?? 'Impossible de supprimer cette recette.', 'error');
   }
 
   previousWeek(): void {
@@ -174,5 +217,13 @@ export class PlannerComponent implements OnInit {
 
   dismissCreatedMessage(): void {
     this.createdRecipeName.set(null);
+  }
+
+  dismissFeedback(): void {
+    this.feedbackMessage.set(null);
+  }
+
+  private showFeedback(text: string, type: 'success' | 'error'): void {
+    this.feedbackMessage.set({ text, type });
   }
 }
