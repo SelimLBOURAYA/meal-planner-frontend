@@ -6,6 +6,7 @@ import {
   MEAL_TYPE_ICONS,
   MEAL_TYPE_LABELS,
   MealType,
+  Recipe,
 } from '../../models/meal.models';
 import { MealPlannerService } from '../../services/meal-planner.service';
 import { MealSlotComponent } from './meal-slot/meal-slot.component';
@@ -119,6 +120,21 @@ export class PlannerComponent implements OnInit {
     }
 
     this.planner.assignMeal(context.dateKey, context.mealType, recipeId);
+    this.closePicker();
+  }
+
+  onAssignApiMeal(event: { recipe: Recipe; saveToCatalog: boolean }): void {
+    const context = this.pickerContext();
+    if (!context) {
+      return;
+    }
+
+    this.planner.assignApiRecipe(
+      context.dateKey,
+      context.mealType,
+      event.recipe,
+      event.saveToCatalog,
+    );
     this.closePicker();
   }
 

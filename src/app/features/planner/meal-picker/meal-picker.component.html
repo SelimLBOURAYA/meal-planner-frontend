@@ -28,69 +28,193 @@
       </button>
     </header>
 
-    <div class="meal-picker__search">
-      <label class="meal-picker__search-label" for="meal-picker-search">
-        Rechercher
-      </label>
-      <input
-        #searchInput
-        id="meal-picker-search"
-        type="search"
-        class="meal-picker__search-input"
-        placeholder="Filtrer par nom ou tag…"
-        [value]="searchQuery()"
-        (input)="onSearchInput($event)"
-        autocomplete="off"
-      />
+    <div
+      class="meal-picker__tabs"
+      role="tablist"
+      aria-label="Source des recettes"
+    >
+      <button
+        type="button"
+        class="meal-picker__tab"
+        role="tab"
+        [class.meal-picker__tab--active]="activeTab() === 'local'"
+        [attr.aria-selected]="activeTab() === 'local'"
+        (click)="switchTab('local')"
+      >
+        Recettes locales
+      </button>
+      <button
+        type="button"
+        class="meal-picker__tab"
+        role="tab"
+        [class.meal-picker__tab--active]="activeTab() === 'online'"
+        [attr.aria-selected]="activeTab() === 'online'"
+        (click)="switchTab('online')"
+      >
+        Rechercher en ligne
+      </button>
     </div>
 
-    @if (filteredRecipes().length === 0) {
-      <p class="meal-picker__empty" role="status">
-        Aucune recette ne correspond à votre recherche.
-      </p>
-    } @else {
-      <ul class="meal-picker__list" role="listbox" aria-label="Recettes locales">
-        @for (recipe of filteredRecipes(); track recipe.id) {
-          <li>
-            <button
-              type="button"
-              class="meal-picker__item"
-              [class.meal-picker__item--selected]="selectedRecipeId() === recipe.id"
-              role="option"
-              [attr.aria-selected]="selectedRecipeId() === recipe.id"
-              (click)="selectRecipe(recipe)"
-            >
-              <span class="meal-picker__emoji" aria-hidden="true">{{
-                recipe.emoji
-              }}</span>
-              <span class="meal-picker__info">
-                <span class="meal-picker__name">{{ recipe.name }}</span>
-                <span class="meal-picker__meta">
-                  {{ totalDuration(recipe) }} min · {{ recipe.calories }} kcal
-                </span>
-              </span>
-            </button>
-          </li>
-        }
-      </ul>
-    }
+    @if (activeTab() === 'local') {
+      <div class="meal-picker__search">
+        <label class="meal-picker__search-label" for="meal-picker-search">
+          Rechercher
+        </label>
+        <input
+          #searchInput
+          id="meal-picker-search"
+          type="search"
+          class="meal-picker__search-input"
+          placeholder="Filtrer par nom ou tag…"
+          [value]="searchQuery()"
+          (input)="onSearchInput($event)"
+          autocomplete="off"
+        />
+      </div>
 
-    <footer class="meal-picker__footer">
-      <button
-        type="button"
-        class="meal-picker__cancel"
-        (click)="close.emit()"
-      >
-        Annuler
-      </button>
-      <button
-        type="button"
-        class="meal-picker__assign"
-        [disabled]="!selectedRecipeId()"
-        (click)="onAssign()"
-      >
-        Assigner à ce créneau
-      </button>
-    </footer>
+      @if (filteredRecipes().length === 0) {
+        <p class="meal-picker__empty" role="status">
+          Aucune recette ne correspond à votre recherche.
+        </p>
+      } @else {
+        <ul class="meal-picker__list" role="listbox" aria-label="Recettes locales">
+          @for (recipe of filteredRecipes(); track recipe.id) {
+            <li>
+              <button
+                type="button"
+                class="meal-picker__item"
+                [class.meal-picker__item--selected]="selectedRecipeId() === recipe.id"
+                role="option"
+                [attr.aria-selected]="selectedRecipeId() === recipe.id"
+                (click)="selectRecipe(recipe)"
+              >
+                <span class="meal-picker__emoji" aria-hidden="true">{{
+                  recipe.emoji
+                }}</span>
+                <span class="meal-picker__info">
+                  <span class="meal-picker__name">{{ recipe.name }}</span>
+                  <span class="meal-picker__meta">
+                    {{ totalDuration(recipe) }} min · {{ recipe.calories }} kcal
+                  </span>
+                </span>
+              </button>
+            </li>
+          }
+        </ul>
+      }
+
+      <footer class="meal-picker__footer">
+        <button
+          type="button"
+          class="meal-picker__cancel"
+          (click)="close.emit()"
+        >
+          Annuler
+        </button>
+        <button
+          type="button"
+          class="meal-picker__assign"
+          [disabled]="!selectedRecipeId()"
+          (click)="onAssign()"
+        >
+          Assigner à ce créneau
+        </button>
+      </footer>
+    } @else {
+      <form class="meal-picker__search" (submit)="onApiSearchSubmit($event)">
+        <label class="meal-picker__search-label" for="meal-picker-online-search">
+          Rechercher sur TheMealDB
+        </label>
+        <div class="meal-picker__online-search-row">
+          <input
+            #onlineSearchInput
+            id="meal-picker-online-search"
+            type="search"
+            class="meal-picker__search-input"
+            placeholder="Ex. pasta, chicken, curry…"
+            [value]="apiQuery()"
+            (input)="onApiQueryInput($event)"
+            autocomplete="off"
+          />
+          <button
+            type="submit"
+            class="meal-picker__search-btn"
+            [disabled]="apiLoading()"
+          >
+            {{ apiLoading() ? 'Recherche…' : 'Rechercher' }}
+          </button>
+        </div>
+      </form>
+
+      @if (apiLoading()) {
+        <p class="meal-picker__status" role="status" aria-live="polite">
+          Recherche en cours…
+        </p>
+      } @else if (apiError()) {
+        <p class="meal-picker__status meal-picker__status--error" role="alert">
+          {{ apiError() }}
+        </p>
+      } @else if (apiResults().length > 0) {
+        <ul
+          class="meal-picker__list"
+          role="listbox"
+          aria-label="Résultats TheMealDB"
+        >
+          @for (recipe of apiResults(); track recipe.id) {
+            <li>
+              <button
+                type="button"
+                class="meal-picker__item"
+                [class.meal-picker__item--selected]="
+                  selectedApiRecipe()?.id === recipe.id
+                "
+                role="option"
+                [attr.aria-selected]="selectedApiRecipe()?.id === recipe.id"
+                (click)="selectApiRecipe(recipe)"
+              >
+                <span class="meal-picker__emoji" aria-hidden="true">{{
+                  recipe.emoji
+                }}</span>
+                <span class="meal-picker__info">
+                  <span class="meal-picker__name">{{ recipe.name }}</span>
+                  <span class="meal-picker__meta">
+                    {{ recipe.ingredients.length }} ingrédients
+                    @if (recipe.tags.length > 0) {
+                      · {{ recipe.tags.join(', ') }}
+                    }
+                  </span>
+                </span>
+              </button>
+            </li>
+          }
+        </ul>
+      }
+
+      <footer class="meal-picker__footer meal-picker__footer--online">
+        <button
+          type="button"
+          class="meal-picker__cancel"
+          (click)="close.emit()"
+        >
+          Annuler
+        </button>
+        <button
+          type="button"
+          class="meal-picker__assign meal-picker__assign--secondary"
+          [disabled]="!selectedApiRecipe()"
+          (click)="onAssignApi(false)"
+        >
+          Assigner au créneau
+        </button>
+        <button
+          type="button"
+          class="meal-picker__assign"
+          [disabled]="!selectedApiRecipe()"
+          (click)="onAssignApi(true)"
+        >
+          Enregistrer &amp; assigner
+        </button>
+      </footer>
+    }
   </div>
 </div>
