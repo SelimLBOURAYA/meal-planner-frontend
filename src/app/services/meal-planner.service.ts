@@ -27,6 +27,7 @@ export class MealPlannerService {
     generateStubPlan(new Date()),
   );
   readonly shoppingCheckedIds = signal<Set<string>>(new Set());
+  private readonly ephemeralRecipes = signal<Map<string, Recipe>>(new Map());
 
   readonly selectedRecipe = computed(() => {
     const recipeId = this.selectedRecipeId();
@@ -94,7 +95,10 @@ export class MealPlannerService {
   });
 
   getRecipe(id: string): Recipe | undefined {
-    return this.recipes().find((recipe) => recipe.id === id);
+    return (
+      this.recipes().find((recipe) => recipe.id === id) ??
+      this.ephemeralRecipes().get(id)
+    );
   }
 
   getMealForSlot(dateKey: string, mealType: MealType): PlannedMeal | undefined {
@@ -165,6 +169,27 @@ export class MealPlannerService {
         unit: ingredient.unit,
       }))
       .sort((a, b) => a.name.localeCompare(b.name, 'fr'));
+  }
+
+  assignApiRecipe(
+    dateKey: string,
+    mealType: MealType,
+    recipe: Recipe,
+    saveToCatalog: boolean,
+  ): void {
+    if (saveToCatalog) {
+      if (!this.recipes().some((item) => item.id === recipe.id)) {
+        this.recipes.update((recipes) => [...recipes, recipe]);
+      }
+    } else {
+      this.ephemeralRecipes.update((recipes) => {
+        const next = new Map(recipes);
+        next.set(recipe.id, recipe);
+        return next;
+      });
+    }
+
+    this.assignMeal(dateKey, mealType, recipe.id);
   }
 
   assignMeal(dateKey: string, mealType: MealType, recipeId: string): void {
