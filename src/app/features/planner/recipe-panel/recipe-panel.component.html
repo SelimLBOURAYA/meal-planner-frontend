@@ -49,18 +49,48 @@
         </div>
         <div class="recipe-panel__meta-item">
           <dt>Portions</dt>
-          <dd>{{ recipe.baseServings }}</dd>
+          <dd>{{ servingsLabel() }}</dd>
         </div>
         <div class="recipe-panel__meta-item">
           <dt>Calories</dt>
-          <dd>{{ recipe.calories }} kcal</dd>
+          <dd>{{ scaledCalories() }} kcal</dd>
         </div>
       </dl>
+
+      @if (selectedPlannedMeal(); as meal) {
+        <div
+          class="recipe-panel__servings-control"
+          role="group"
+          [attr.aria-label]="'Portions : ' + meal.plannedServings"
+        >
+          <span class="recipe-panel__servings-label">Ajuster les portions</span>
+          <div class="recipe-panel__servings-stepper">
+            <button
+              type="button"
+              class="recipe-panel__servings-btn"
+              [disabled]="meal.plannedServings <= 1"
+              aria-label="Diminuer les portions"
+              (click)="decrementServings()"
+            >
+              −
+            </button>
+            <span class="recipe-panel__servings-value">{{ meal.plannedServings }}</span>
+            <button
+              type="button"
+              class="recipe-panel__servings-btn"
+              aria-label="Augmenter les portions"
+              (click)="incrementServings()"
+            >
+              +
+            </button>
+          </div>
+        </div>
+      }
 
       <section class="recipe-panel__ingredients" aria-labelledby="ingredients-heading">
         <h3 id="ingredients-heading" class="recipe-panel__section-title">Ingrédients</h3>
         <ul class="recipe-panel__ingredient-list">
-          @for (ingredient of recipe.ingredients; track ingredient.name) {
+          @for (ingredient of scaledIngredients(); track ingredient.name) {
             <li class="recipe-panel__ingredient">
               <span class="recipe-panel__quantity">{{ ingredient.quantity }} {{ ingredient.unit }}</span>
               <span class="recipe-panel__ingredient-name">{{ ingredient.name }}</span>

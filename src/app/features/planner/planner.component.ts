@@ -92,13 +92,30 @@ export class PlannerComponent implements OnInit {
     return meal ? this.planner.getRecipe(meal.recipeId) : undefined;
   }
 
-  isSlotSelected(dateKey: string, mealType: MealType): boolean {
+  getPlannedServings(dateKey: string, mealType: MealType): number {
     const meal = this.planner.getMealForSlot(dateKey, mealType);
-    return !!meal && this.planner.selectedRecipeId() === meal.recipeId;
+    return meal?.plannedServings ?? 1;
   }
 
-  onRecipeSelect(recipeId: string): void {
-    this.planner.selectRecipe(recipeId);
+  isSlotSelected(dateKey: string, mealType: MealType): boolean {
+    const slot = this.planner.selectedSlot();
+    return (
+      !!this.planner.getMealForSlot(dateKey, mealType) &&
+      slot?.dateKey === dateKey &&
+      slot?.mealType === mealType
+    );
+  }
+
+  onRecipeSelect(dateKey: string, mealType: MealType): void {
+    this.planner.selectMeal(dateKey, mealType);
+  }
+
+  onServingsChange(
+    dateKey: string,
+    mealType: MealType,
+    servings: number,
+  ): void {
+    this.planner.updatePlannedServings(dateKey, mealType, servings);
   }
 
   openPicker(dateKey: string, mealType: MealType): void {
@@ -114,17 +131,26 @@ export class PlannerComponent implements OnInit {
     this.pickerContext.set(null);
   }
 
-  onAssignMeal(recipeId: string): void {
+  onAssignMeal(event: { recipeId: string; plannedServings: number }): void {
     const context = this.pickerContext();
     if (!context) {
       return;
     }
 
-    this.planner.assignMeal(context.dateKey, context.mealType, recipeId);
+    this.planner.assignMeal(
+      context.dateKey,
+      context.mealType,
+      event.recipeId,
+      event.plannedServings,
+    );
     this.closePicker();
   }
 
-  onAssignApiMeal(event: { recipe: Recipe; saveToCatalog: boolean }): void {
+  onAssignApiMeal(event: {
+    recipe: Recipe;
+    saveToCatalog: boolean;
+    plannedServings: number;
+  }): void {
     const context = this.pickerContext();
     if (!context) {
       return;
@@ -135,6 +161,7 @@ export class PlannerComponent implements OnInit {
       context.mealType,
       event.recipe,
       event.saveToCatalog,
+      event.plannedServings,
     );
     this.closePicker();
   }

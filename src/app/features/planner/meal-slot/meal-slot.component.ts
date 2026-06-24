@@ -9,8 +9,10 @@ import { Recipe } from '../../../models/meal.models';
 })
 export class MealSlotComponent {
   readonly recipe = input<Recipe | undefined>();
+  readonly plannedServings = input(1);
   readonly selected = input(false);
-  readonly recipeSelect = output<string>();
+  readonly recipeSelect = output<void>();
+  readonly servingsChange = output<number>();
   readonly emptySlotClick = output<void>();
   readonly replaceClick = output<void>();
   readonly removeClick = output<void>();
@@ -21,9 +23,15 @@ export class MealSlotComponent {
     return recipe.prepTime + recipe.cookTime;
   }
 
-  onFilledSlotClick(recipe: Recipe): void {
+  scaledCalories(recipe: Recipe): number {
+    const baseServings = recipe.baseServings > 0 ? recipe.baseServings : 1;
+    const scale = this.plannedServings() / baseServings;
+    return Math.round(recipe.calories * scale);
+  }
+
+  onFilledSlotClick(): void {
     this.menuOpen.set(false);
-    this.recipeSelect.emit(recipe.id);
+    this.recipeSelect.emit();
   }
 
   onEmptySlotClick(): void {
@@ -49,5 +57,18 @@ export class MealSlotComponent {
 
   closeMenu(): void {
     this.menuOpen.set(false);
+  }
+
+  decrementServings(event: MouseEvent): void {
+    event.stopPropagation();
+    const next = this.plannedServings() - 1;
+    if (next >= 1) {
+      this.servingsChange.emit(next);
+    }
+  }
+
+  incrementServings(event: MouseEvent): void {
+    event.stopPropagation();
+    this.servingsChange.emit(this.plannedServings() + 1);
   }
 }
