@@ -24,6 +24,12 @@ export interface PlannedMeal {
   date: string;
   mealType: MealType;
   recipeId: string;
+  plannedServings: number;
+}
+
+export interface SelectedSlot {
+  dateKey: string;
+  mealType: MealType;
 }
 
 export interface ShoppingListItem {

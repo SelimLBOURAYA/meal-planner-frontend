@@ -104,6 +104,46 @@
       }
 
       <footer class="meal-picker__footer">
+        <div
+          class="meal-picker__servings"
+          role="group"
+          [attr.aria-label]="'Portions : ' + plannedServings()"
+        >
+          <label class="meal-picker__servings-label" for="meal-picker-servings">
+            Portions
+          </label>
+          <div class="meal-picker__servings-control">
+            <button
+              type="button"
+              class="meal-picker__servings-btn"
+              [disabled]="plannedServings() <= 1 || !selectedRecipeId()"
+              aria-label="Diminuer les portions"
+              (click)="decrementServings()"
+            >
+              −
+            </button>
+            <input
+              id="meal-picker-servings"
+              type="number"
+              class="meal-picker__servings-input"
+              min="1"
+              step="1"
+              [value]="plannedServings()"
+              [disabled]="!selectedRecipeId()"
+              (input)="onServingsInput($event)"
+            />
+            <button
+              type="button"
+              class="meal-picker__servings-btn"
+              [disabled]="!selectedRecipeId()"
+              aria-label="Augmenter les portions"
+              (click)="incrementServings()"
+            >
+              +
+            </button>
+          </div>
+        </div>
+        <div class="meal-picker__footer-actions">
         <button
           type="button"
           class="meal-picker__cancel"
@@ -119,6 +159,7 @@
         >
           Assigner à ce créneau
         </button>
+        </div>
       </footer>
     } @else {
       <form class="meal-picker__search" (submit)="onApiSearchSubmit($event)">
@@ -191,6 +232,46 @@
       }
 
       <footer class="meal-picker__footer meal-picker__footer--online">
+        <div
+          class="meal-picker__servings"
+          role="group"
+          [attr.aria-label]="'Portions : ' + plannedServings()"
+        >
+          <label class="meal-picker__servings-label" for="meal-picker-online-servings">
+            Portions
+          </label>
+          <div class="meal-picker__servings-control">
+            <button
+              type="button"
+              class="meal-picker__servings-btn"
+              [disabled]="plannedServings() <= 1 || !selectedApiRecipe()"
+              aria-label="Diminuer les portions"
+              (click)="decrementServings()"
+            >
+              −
+            </button>
+            <input
+              id="meal-picker-online-servings"
+              type="number"
+              class="meal-picker__servings-input"
+              min="1"
+              step="1"
+              [value]="plannedServings()"
+              [disabled]="!selectedApiRecipe()"
+              (input)="onServingsInput($event)"
+            />
+            <button
+              type="button"
+              class="meal-picker__servings-btn"
+              [disabled]="!selectedApiRecipe()"
+              aria-label="Augmenter les portions"
+              (click)="incrementServings()"
+            >
+              +
+            </button>
+          </div>
+        </div>
+        <div class="meal-picker__footer-actions">
         <button
           type="button"
           class="meal-picker__cancel"
@@ -214,6 +295,7 @@
         >
           Enregistrer &amp; assigner
         </button>
+        </div>
       </footer>
     }
   </div>

@@ -28,7 +28,8 @@ Application Angular de planification de repas hebdomadaire, entièrement locale 
 ### Détail des recettes
 
 - Panneau latéral (desktop) ou **overlay mobile** au clic sur un repas
-- Nom, description, tags, temps, portions, calories et ingrédients quantifiés
+- Nom, description, tags, temps, portions planifiées vs portions de base, calories ajustées et ingrédients quantifiés **mis à l'échelle**
+- Stepper de portions dans le panneau (recalcule courses et stats)
 - Suppression des recettes personnalisées ou importées (avec confirmation)
 - Fermeture au clic extérieur, bouton × ou touche Échap
 
@@ -45,9 +46,16 @@ Application Angular de planification de repas hebdomadaire, entièrement locale 
 
 ### Liste de courses
 
-- Agrégation dynamique des ingrédients de la semaine affichée
+- Agrégation dynamique des ingrédients de la semaine affichée, **pondérée par le nombre de portions** de chaque créneau (`plannedServings / baseServings`)
 - **Cases à cocher** persistées pour marquer les articles achetés
 - **Barre de progression** (articles cochés / total)
+
+### Portions par créneau
+
+- Chaque repas planifié stocke un `plannedServings` (défaut : `baseServings` de la recette)
+- Stepper compact sur les créneaux remplis et champ portions dans le picker d'assignation
+- Modifier les portions recalcule immédiatement la liste de courses et les statistiques caloriques
+- Persistance dans le localStorage (migration transparente des données existantes)
 
 ### Persistance locale
 
@@ -114,7 +122,8 @@ Les artefacts sont générés dans `dist/meal-planner/`.
 ## Parcours de test manuel
 
 1. Créer une recette via « + Nouvelle recette »
-2. Assigner la recette à un créneau vide
-3. Consulter la liste de courses et cocher des articles
-4. Importer une recette depuis TheMealDB
-5. Recharger la page → vérifier que planning, recettes et cases cochées sont conservés
+2. Assigner la recette à un créneau vide (ajuster les portions si besoin)
+3. Modifier les portions d'un créneau existant et vérifier la liste de courses
+4. Consulter la liste de courses et cocher des articles
+5. Importer une recette depuis TheMealDB
+6. Recharger la page → vérifier que planning, portions, recettes et cases cochées sont conservés

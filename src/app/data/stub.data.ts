@@ -282,6 +282,7 @@ export function generateStubPlan(referenceDate: Date): PlannedMeal[] {
         date: dateKey,
         mealType,
         recipeId: recipe.id,
+        plannedServings: recipe.baseServings,
       });
       mealIndex++;
     }

@@ -121,8 +121,10 @@
             @for (day of weekDays(); track day.dateKey) {
               <app-meal-slot
                 [recipe]="getRecipeForSlot(day.dateKey, mealType)"
+                [plannedServings]="getPlannedServings(day.dateKey, mealType)"
                 [selected]="isSlotSelected(day.dateKey, mealType)"
-                (recipeSelect)="onRecipeSelect($event)"
+                (recipeSelect)="onRecipeSelect(day.dateKey, mealType)"
+                (servingsChange)="onServingsChange(day.dateKey, mealType, $event)"
                 (emptySlotClick)="openPicker(day.dateKey, mealType)"
                 (replaceClick)="onReplaceMeal(day.dateKey, mealType)"
                 (removeClick)="onRemoveMeal(day.dateKey, mealType)"

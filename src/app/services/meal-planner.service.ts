@@ -12,6 +12,7 @@ import {
   MealType,
   PlannedMeal,
   Recipe,
+  SelectedSlot,
   ShoppingListItem,
   WeekStats,
 } from '../models/meal.models';
@@ -35,6 +36,7 @@ export interface DeleteRecipeResult {
 export class MealPlannerService {
   readonly weekOffset = signal(0);
   readonly selectedRecipeId = signal<string | null>(null);
+  readonly selectedSlot = signal<SelectedSlot | null>(null);
   readonly recipes = signal<Recipe[]>([...STUB_RECIPES]);
   readonly plannedMeals = signal<PlannedMeal[]>(
     generateStubPlan(new Date()),
@@ -46,6 +48,15 @@ export class MealPlannerService {
   readonly selectedRecipe = computed(() => {
     const recipeId = this.selectedRecipeId();
     return recipeId ? this.getRecipe(recipeId) : undefined;
+  });
+
+  readonly selectedPlannedMeal = computed(() => {
+    const slot = this.selectedSlot();
+    if (!slot) {
+      return undefined;
+    }
+
+    return this.getMealForSlot(slot.dateKey, slot.mealType);
   });
 
   readonly weekLabel = computed(() => {
@@ -67,7 +78,9 @@ export class MealPlannerService {
     for (const meal of weekMeals) {
       const recipe = this.getRecipe(meal.recipeId);
       if (recipe) {
-        totalCalories += recipe.calories;
+        totalCalories += Math.round(
+          recipe.calories * this.getServingScale(recipe, meal.plannedServings),
+        );
       }
     }
 
@@ -85,11 +98,11 @@ export class MealPlannerService {
 
   readonly shoppingList = computed((): ShoppingListItem[] => {
     const dateKeys = new Set(this.getWeekDateKeys());
-    const recipeIds = this.plannedMeals()
-      .filter((meal) => dateKeys.has(meal.date))
-      .map((meal) => meal.recipeId);
+    const weekMeals = this.plannedMeals().filter((meal) =>
+      dateKeys.has(meal.date),
+    );
     const checkedIds = this.shoppingCheckedIds();
-    const aggregated = this.aggregateIngredients(recipeIds);
+    const aggregated = this.aggregateIngredients(weekMeals);
 
     return aggregated.map((item) => ({
       ...item,
@@ -144,6 +157,20 @@ export class MealPlannerService {
 
   selectRecipe(recipeId: string | null): void {
     this.selectedRecipeId.set(recipeId);
+
+    if (!recipeId) {
+      this.selectedSlot.set(null);
+    }
+  }
+
+  selectMeal(dateKey: string, mealType: MealType): void {
+    const meal = this.getMealForSlot(dateKey, mealType);
+    if (!meal) {
+      return;
+    }
+
+    this.selectedRecipeId.set(meal.recipeId);
+    this.selectedSlot.set({ dateKey, mealType });
   }
 
   previousWeek(): void {
@@ -175,23 +202,33 @@ export class MealPlannerService {
     });
   }
 
-  aggregateIngredients(recipeIds: string[]): Omit<ShoppingListItem, 'checked'>[] {
+  aggregateIngredients(
+    meals: Pick<PlannedMeal, 'recipeId' | 'plannedServings'>[],
+  ): Omit<ShoppingListItem, 'checked'>[] {
     const merged = new Map<string, Ingredient>();
 
-    for (const recipeId of recipeIds) {
-      const recipe = this.getRecipe(recipeId);
+    for (const meal of meals) {
+      const recipe = this.getRecipe(meal.recipeId);
       if (!recipe) {
         continue;
       }
 
+      const scale = this.getServingScale(recipe, meal.plannedServings);
+
       for (const ingredient of recipe.ingredients) {
         const key = this.ingredientKey(ingredient.name, ingredient.unit);
+        const scaledQuantity = this.roundQuantity(ingredient.quantity * scale);
         const existing = merged.get(key);
 
         if (existing) {
-          existing.quantity += ingredient.quantity;
+          existing.quantity = this.roundQuantity(
+            existing.quantity + scaledQuantity,
+          );
         } else {
-          merged.set(key, { ...ingredient });
+          merged.set(key, {
+            ...ingredient,
+            quantity: scaledQuantity,
+          });
         }
       }
     }
@@ -211,6 +248,7 @@ export class MealPlannerService {
     mealType: MealType,
     recipe: Recipe,
     saveToCatalog: boolean,
+    plannedServings?: number,
   ): void {
     const existingIds = this.collectRecipeIds();
 
@@ -221,7 +259,7 @@ export class MealPlannerService {
         this.recipes.update((recipes) => [...recipes, resolved]);
       }
 
-      this.assignMeal(dateKey, mealType, resolved.id);
+      this.assignMeal(dateKey, mealType, resolved.id, plannedServings);
       return;
     }
 
@@ -232,15 +270,26 @@ export class MealPlannerService {
       return next;
     });
 
-    this.assignMeal(dateKey, mealType, resolved.id);
+    this.assignMeal(dateKey, mealType, resolved.id, plannedServings);
   }
 
-  assignMeal(dateKey: string, mealType: MealType, recipeId: string): void {
+  assignMeal(
+    dateKey: string,
+    mealType: MealType,
+    recipeId: string,
+    plannedServings?: number,
+  ): void {
+    const recipe = this.getRecipe(recipeId);
+    const servings = this.normalizeServings(
+      plannedServings ?? recipe?.baseServings ?? 1,
+    );
+
     const meal: PlannedMeal = {
       id: `planned-${dateKey}-${mealType}`,
       date: dateKey,
       mealType,
       recipeId,
+      plannedServings: servings,
     };
 
     const existing = this.getMealForSlot(dateKey, mealType);
@@ -253,7 +302,48 @@ export class MealPlannerService {
       this.plannedMeals.update((meals) => [...meals, meal]);
     }
 
-    this.selectRecipe(recipeId);
+    this.selectMeal(dateKey, mealType);
+  }
+
+  updatePlannedServings(
+    dateKey: string,
+    mealType: MealType,
+    servings: number,
+  ): void {
+    const existing = this.getMealForSlot(dateKey, mealType);
+    if (!existing) {
+      return;
+    }
+
+    const normalized = this.normalizeServings(servings);
+
+    this.plannedMeals.update((meals) =>
+      meals.map((meal) =>
+        meal.id === existing.id
+          ? { ...meal, plannedServings: normalized }
+          : meal,
+      ),
+    );
+  }
+
+  getServingScale(recipe: Recipe, plannedServings: number): number {
+    const baseServings = recipe.baseServings > 0 ? recipe.baseServings : 1;
+    return this.normalizeServings(plannedServings) / baseServings;
+  }
+
+  scaledIngredients(recipe: Recipe, plannedServings: number): Ingredient[] {
+    const scale = this.getServingScale(recipe, plannedServings);
+
+    return recipe.ingredients.map((ingredient) => ({
+      ...ingredient,
+      quantity: this.roundQuantity(ingredient.quantity * scale),
+    }));
+  }
+
+  scaledCalories(recipe: Recipe, plannedServings: number): number {
+    return Math.round(
+      recipe.calories * this.getServingScale(recipe, plannedServings),
+    );
   }
 
   removeMeal(dateKey: string, mealType: MealType): void {
@@ -268,6 +358,14 @@ export class MealPlannerService {
 
     if (this.selectedRecipeId() === existing.recipeId) {
       this.selectRecipe(null);
+    } else {
+      const slot = this.selectedSlot();
+      if (
+        slot?.dateKey === dateKey &&
+        slot.mealType === mealType
+      ) {
+        this.selectRecipe(null);
+      }
     }
   }
 
@@ -350,7 +448,7 @@ export class MealPlannerService {
 
     const customRecipes = mergeCustomRecipes(stored.customRecipes);
     this.recipes.set([...STUB_RECIPES, ...customRecipes]);
-    this.plannedMeals.set(stored.plannedMeals);
+    this.plannedMeals.set(this.migratePlannedMeals(stored.plannedMeals));
     this.shoppingCheckedIds.set(new Set(stored.shoppingCheckedIds));
 
     const ephemeral = new Map<string, Recipe>();
@@ -393,6 +491,34 @@ export class MealPlannerService {
     }
 
     return ids;
+  }
+
+  private migratePlannedMeals(
+    meals: Array<PlannedMeal & { plannedServings?: number }>,
+  ): PlannedMeal[] {
+    return meals.map((meal) => {
+      if (meal.plannedServings != null && meal.plannedServings >= 1) {
+        return {
+          ...meal,
+          plannedServings: this.normalizeServings(meal.plannedServings),
+        };
+      }
+
+      const recipe = this.getRecipe(meal.recipeId);
+      return {
+        ...meal,
+        plannedServings: recipe?.baseServings ?? 1,
+      };
+    });
+  }
+
+  private normalizeServings(value: number): number {
+    const rounded = Math.round(value);
+    return rounded >= 1 ? rounded : 1;
+  }
+
+  private roundQuantity(quantity: number): number {
+    return Math.round(quantity * 100) / 100;
   }
 
   private ingredientKey(name: string, unit: string): string {

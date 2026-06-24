@@ -38,12 +38,17 @@ export class MealPickerComponent implements AfterViewInit {
   readonly dayLabel = input.required<string>();
 
   readonly close = output<void>();
-  readonly assign = output<string>();
-  readonly assignApi = output<{ recipe: Recipe; saveToCatalog: boolean }>();
+  readonly assign = output<{ recipeId: string; plannedServings: number }>();
+  readonly assignApi = output<{
+    recipe: Recipe;
+    saveToCatalog: boolean;
+    plannedServings: number;
+  }>();
 
   readonly activeTab = signal<PickerTab>('local');
   readonly searchQuery = signal('');
   readonly selectedRecipeId = signal<string | null>(null);
+  readonly plannedServings = signal(1);
 
   readonly apiQuery = signal('');
   readonly apiResults = signal<Recipe[]>([]);
@@ -148,10 +153,12 @@ export class MealPickerComponent implements AfterViewInit {
 
   selectRecipe(recipe: Recipe): void {
     this.selectedRecipeId.set(recipe.id);
+    this.plannedServings.set(recipe.baseServings);
   }
 
   selectApiRecipe(recipe: Recipe): void {
     this.selectedApiRecipe.set(recipe);
+    this.plannedServings.set(recipe.baseServings);
   }
 
   totalDuration(recipe: Recipe): number {
@@ -161,15 +168,47 @@ export class MealPickerComponent implements AfterViewInit {
   onAssign(): void {
     const recipeId = this.selectedRecipeId();
     if (recipeId) {
-      this.assign.emit(recipeId);
+      this.assign.emit({
+        recipeId,
+        plannedServings: this.normalizeServings(this.plannedServings()),
+      });
     }
   }
 
   onAssignApi(saveToCatalog: boolean): void {
     const recipe = this.selectedApiRecipe();
     if (recipe) {
-      this.assignApi.emit({ recipe, saveToCatalog });
+      this.assignApi.emit({
+        recipe,
+        saveToCatalog,
+        plannedServings: this.normalizeServings(this.plannedServings()),
+      });
     }
+  }
+
+  onServingsInput(event: Event): void {
+    const value = Number((event.target as HTMLInputElement).value);
+    if (!Number.isFinite(value)) {
+      return;
+    }
+
+    this.plannedServings.set(this.normalizeServings(value));
+  }
+
+  decrementServings(): void {
+    const next = this.plannedServings() - 1;
+    if (next >= 1) {
+      this.plannedServings.set(next);
+    }
+  }
+
+  incrementServings(): void {
+    this.plannedServings.set(this.plannedServings() + 1);
+  }
+
+  private normalizeServings(value: number): number {
+    const rounded = Math.round(value);
+    return rounded >= 1 ? rounded : 1;
   }
 
   onBackdropClick(event: MouseEvent): void {
