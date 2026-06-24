@@ -1,4 +1,4 @@
-import { Injectable, computed, signal } from '@angular/core';
+import { Injectable, computed, effect, signal } from '@angular/core';
 
 import {
   formatWeekRange,
@@ -15,19 +15,33 @@ import {
   ShoppingListItem,
   WeekStats,
 } from '../models/meal.models';
+import {
+  ensureUniqueApiRecipeId,
+  generateUniqueRecipeId,
+  isStubRecipeId,
+  mergeCustomRecipes,
+  remapConflictingRecipe,
+} from './recipe-id.utils';
+import { StorageService } from './storage.service';
 
 const MAX_WEEK_SLOTS = 14;
+
+export interface DeleteRecipeResult {
+  success: boolean;
+  error?: string;
+}
 
 @Injectable({ providedIn: 'root' })
 export class MealPlannerService {
   readonly weekOffset = signal(0);
   readonly selectedRecipeId = signal<string | null>(null);
-  readonly recipes = signal<Recipe[]>(STUB_RECIPES);
+  readonly recipes = signal<Recipe[]>([...STUB_RECIPES]);
   readonly plannedMeals = signal<PlannedMeal[]>(
     generateStubPlan(new Date()),
   );
   readonly shoppingCheckedIds = signal<Set<string>>(new Set());
   private readonly ephemeralRecipes = signal<Map<string, Recipe>>(new Map());
+  private hydrated = false;
 
   readonly selectedRecipe = computed(() => {
     const recipeId = this.selectedRecipeId();
@@ -94,11 +108,32 @@ export class MealPlannerService {
     };
   });
 
+  constructor(private readonly storage: StorageService) {
+    this.hydrateFromStorage();
+    this.hydrated = true;
+
+    effect(() => {
+      if (!this.hydrated) {
+        return;
+      }
+
+      this.recipes();
+      this.ephemeralRecipes();
+      this.plannedMeals();
+      this.shoppingCheckedIds();
+      this.persistState();
+    });
+  }
+
   getRecipe(id: string): Recipe | undefined {
     return (
       this.recipes().find((recipe) => recipe.id === id) ??
       this.ephemeralRecipes().get(id)
     );
+  }
+
+  isDeletableRecipe(recipeId: string): boolean {
+    return !isStubRecipeId(recipeId) && !!this.getRecipe(recipeId);
   }
 
   getMealForSlot(dateKey: string, mealType: MealType): PlannedMeal | undefined {
@@ -177,19 +212,27 @@ export class MealPlannerService {
     recipe: Recipe,
     saveToCatalog: boolean,
   ): void {
+    const existingIds = this.collectRecipeIds();
+
     if (saveToCatalog) {
-      if (!this.recipes().some((item) => item.id === recipe.id)) {
-        this.recipes.update((recipes) => [...recipes, recipe]);
+      const resolved = ensureUniqueApiRecipeId(recipe, existingIds);
+
+      if (!this.recipes().some((item) => item.id === resolved.id)) {
+        this.recipes.update((recipes) => [...recipes, resolved]);
       }
-    } else {
-      this.ephemeralRecipes.update((recipes) => {
-        const next = new Map(recipes);
-        next.set(recipe.id, recipe);
-        return next;
-      });
+
+      this.assignMeal(dateKey, mealType, resolved.id);
+      return;
     }
 
-    this.assignMeal(dateKey, mealType, recipe.id);
+    const resolved = remapConflictingRecipe(recipe, existingIds);
+    this.ephemeralRecipes.update((recipes) => {
+      const next = new Map(recipes);
+      next.set(resolved.id, resolved);
+      return next;
+    });
+
+    this.assignMeal(dateKey, mealType, resolved.id);
   }
 
   assignMeal(dateKey: string, mealType: MealType, recipeId: string): void {
@@ -238,6 +281,53 @@ export class MealPlannerService {
     return newRecipe;
   }
 
+  deleteRecipe(recipeId: string): DeleteRecipeResult {
+    if (isStubRecipeId(recipeId)) {
+      return {
+        success: false,
+        error: 'Les recettes de démonstration ne peuvent pas être supprimées.',
+      };
+    }
+
+    const inPlan = this.plannedMeals().some((meal) => meal.recipeId === recipeId);
+    if (inPlan) {
+      return {
+        success: false,
+        error: 'Cette recette est utilisée dans le planning. Retirez-la des créneaux avant de la supprimer.',
+      };
+    }
+
+    const inCatalog = this.recipes().some((recipe) => recipe.id === recipeId);
+    const inEphemeral = this.ephemeralRecipes().has(recipeId);
+
+    if (!inCatalog && !inEphemeral) {
+      return {
+        success: false,
+        error: 'Recette introuvable.',
+      };
+    }
+
+    if (inCatalog) {
+      this.recipes.update((recipes) =>
+        recipes.filter((recipe) => recipe.id !== recipeId),
+      );
+    }
+
+    if (inEphemeral) {
+      this.ephemeralRecipes.update((recipes) => {
+        const next = new Map(recipes);
+        next.delete(recipeId);
+        return next;
+      });
+    }
+
+    if (this.selectedRecipeId() === recipeId) {
+      this.selectRecipe(null);
+    }
+
+    return { success: true };
+  }
+
   toggleShoppingItem(itemId: string): void {
     this.shoppingCheckedIds.update((checked) => {
       const next = new Set(checked);
@@ -252,18 +342,64 @@ export class MealPlannerService {
     });
   }
 
+  private hydrateFromStorage(): void {
+    const stored = this.storage.load();
+    if (!stored) {
+      return;
+    }
+
+    const customRecipes = mergeCustomRecipes(stored.customRecipes);
+    this.recipes.set([...STUB_RECIPES, ...customRecipes]);
+    this.plannedMeals.set(stored.plannedMeals);
+    this.shoppingCheckedIds.set(new Set(stored.shoppingCheckedIds));
+
+    const ephemeral = new Map<string, Recipe>();
+    const existingIds = this.collectRecipeIds();
+
+    for (const recipe of stored.ephemeralRecipes) {
+      const resolved = remapConflictingRecipe(recipe, existingIds);
+      ephemeral.set(resolved.id, resolved);
+    }
+
+    this.ephemeralRecipes.set(ephemeral);
+    this.reconcilePlannedMeals();
+  }
+
+  private persistState(): void {
+    const stubIds = new Set(STUB_RECIPES.map((recipe) => recipe.id));
+    const customRecipes = this.recipes().filter(
+      (recipe) => !stubIds.has(recipe.id),
+    );
+
+    this.storage.save({
+      customRecipes,
+      ephemeralRecipes: Array.from(this.ephemeralRecipes().values()),
+      plannedMeals: this.plannedMeals(),
+      shoppingCheckedIds: Array.from(this.shoppingCheckedIds()),
+    });
+  }
+
+  private reconcilePlannedMeals(): void {
+    this.plannedMeals.update((meals) =>
+      meals.filter((meal) => !!this.getRecipe(meal.recipeId)),
+    );
+  }
+
+  private collectRecipeIds(): Set<string> {
+    const ids = new Set(this.recipes().map((recipe) => recipe.id));
+
+    for (const id of this.ephemeralRecipes().keys()) {
+      ids.add(id);
+    }
+
+    return ids;
+  }
+
   private ingredientKey(name: string, unit: string): string {
     return `${name.trim().toLowerCase()}|${unit.trim().toLowerCase()}`;
   }
 
   private generateRecipeId(): string {
-    const existingIds = new Set(this.recipes().map((recipe) => recipe.id));
-
-    do {
-      const id = `recipe-user-${crypto.randomUUID()}`;
-      if (!existingIds.has(id)) {
-        return id;
-      }
-    } while (true);
+    return generateUniqueRecipeId(this.collectRecipeIds());
   }
 }

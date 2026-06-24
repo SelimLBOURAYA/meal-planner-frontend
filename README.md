@@ -1,15 +1,16 @@
 # Planificateur de repas
 
-Maquette Angular d'un planificateur de repas hebdomadaire, alimentée par des **données stub** (aucun backend requis).
+Application Angular de planification de repas hebdomadaire, entièrement locale (aucun backend). Les données sont persistées dans le **localStorage** du navigateur.
 
 ## Fonctionnalités
 
 ### Planning hebdomadaire
 
-- Grille **7 jours × 3 repas** : petit-déjeuner, déjeuner et dîner
+- Grille **7 jours × 2 repas** : déjeuner et dîner uniquement
 - Affichage des repas planifiés avec emoji, nom, durée totale et calories
 - Mise en évidence du **jour courant**
-- Créneaux vides affichés avec un libellé « + Ajouter » (non fonctionnel — maquette uniquement)
+- Créneaux vides cliquables pour assigner une recette
+- Actions par créneau : remplacer ou vider un repas (avec confirmation)
 
 ### Navigation temporelle
 
@@ -26,30 +27,41 @@ Maquette Angular d'un planificateur de repas hebdomadaire, alimentée par des **
 
 ### Détail des recettes
 
-- Panneau latéral affiché au clic sur un repas
-- Pour chaque recette :
-  - Nom, description et tags (rapide, végétarien, etc.)
-  - Temps de préparation, cuisson, nombre de portions et calories
-  - Liste des **ingrédients** avec quantités
-- État vide invitant à sélectionner un repas dans la grille
+- Panneau latéral (desktop) ou **overlay mobile** au clic sur un repas
+- Nom, description, tags, temps, portions, calories et ingrédients quantifiés
+- Suppression des recettes personnalisées ou importées (avec confirmation)
+- Fermeture au clic extérieur, bouton × ou touche Échap
+
+### Création de recettes
+
+- Formulaire réactif avec ingrédients dynamiques (`{ name, quantity, unit }`)
+- Recettes enregistrées dans le catalogue local et persistées
+
+### Import TheMealDB
+
+- Recherche de recettes via l'API publique [TheMealDB](https://www.themealdb.com/)
+- Assignation au créneau seul ou **enregistrement dans le catalogue** + assignation
+- Gestion des erreurs réseau et résultats vides
 
 ### Liste de courses
 
-- Liste d'ingrédients agrégés pour la semaine (données stub)
-- **Cases à cocher** pour marquer les articles achetés
+- Agrégation dynamique des ingrédients de la semaine affichée
+- **Cases à cocher** persistées pour marquer les articles achetés
 - **Barre de progression** (articles cochés / total)
-- Texte barré pour les articles déjà cochés
 
-### Données stub
+### Persistance locale
 
-- **10 recettes** prédéfinies (overnight oats, carbonara, curry de lentilles, saumon en papillote, etc.)
-- **Planning généré** automatiquement pour la semaine affichée
-- **Liste de courses** statique avec quelques articles déjà cochés
+- Recettes utilisateur et importées
+- Planning (`PlannedMeal[]`)
+- État des cases cochées de la liste de courses
+- Hydratation au démarrage, sauvegarde automatique à chaque modification
 
 ## Stack technique
 
 - [Angular 19](https://angular.dev/) (composants standalone)
 - [Signals](https://angular.dev/guide/signals) pour l'état réactif
+- Reactive Forms pour la création de recettes
+- `HttpClient` pour TheMealDB
 - SCSS pour le style
 - TypeScript 5.7
 
@@ -57,21 +69,24 @@ Maquette Angular d'un planificateur de repas hebdomadaire, alimentée par des **
 
 ```
 src/app/
-├── models/meal.models.ts           # Types (Recipe, PlannedMeal, MealType…)
-├── data/stub.data.ts                 # Recettes, planning et liste de courses
-├── services/meal-planner.service.ts  # Logique métier et état
-├── components/
-│   ├── meal-slot/                    # Cellule repas dans la grille
-│   ├── recipe-panel/                 # Panneau de détail recette
-│   └── shopping-list/                # Liste de courses
-└── pages/planner/                    # Page principale
+├── models/                    # Types domaine (Recipe, PlannedMeal…)
+├── data/stub.data.ts          # Recettes de démonstration
+├── services/
+│   ├── meal-planner.service.ts
+│   ├── storage.service.ts
+│   ├── themealdb.service.ts
+│   └── themealdb.mapper.ts
+├── features/
+│   ├── planner/               # Grille, panneau recette, liste de courses
+│   └── recipes/               # Formulaire de création
+└── app.routes.ts
 ```
 
 ## Démarrage
 
 ### Prérequis
 
-- Node.js 18+
+- Node.js 22+ (LTS recommandé)
 - npm
 
 ### Installation
@@ -96,6 +111,10 @@ npm run build
 
 Les artefacts sont générés dans `dist/meal-planner/`.
 
-## Limites de la maquette
+## Parcours de test manuel
 
-Cette version est une **maquette UI** : les données sont en dur, l'ajout ou la modification de repas n'est pas implémenté, et aucune persistance (localStorage, API) n'est prévue.
+1. Créer une recette via « + Nouvelle recette »
+2. Assigner la recette à un créneau vide
+3. Consulter la liste de courses et cocher des articles
+4. Importer une recette depuis TheMealDB
+5. Recharger la page → vérifier que planning, recettes et cases cochées sont conservés
