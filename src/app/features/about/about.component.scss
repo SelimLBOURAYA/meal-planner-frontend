@@ -1,0 +1,78 @@
+.about-page {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
+}
+
+.about-page__header {
+  margin-bottom: 1.5rem;
+}
+
+.about-page__back {
+  display: inline-block;
+  margin-bottom: 0.75rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--color-primary);
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: underline;
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+    border-radius: var(--radius-sm);
+  }
+}
+
+.about-page__title {
+  margin: 0 0 0.25rem;
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--color-primary);
+}
+
+.about-page__subtitle {
+  margin: 0;
+  color: var(--color-text-muted);
+}
+
+.about-page__content {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  padding: 1.5rem;
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-md);
+}
+
+.about-page__section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+
+  p {
+    margin: 0;
+    color: var(--color-text);
+  }
+}
+
+.about-page__section-title {
+  margin: 0;
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.about-page__list {
+  margin: 0;
+  padding-left: 1.25rem;
+  color: var(--color-text);
+
+  li + li {
+    margin-top: 0.375rem;
+  }
+}

@@ -1,0 +1,50 @@
+<main class="about-page">
+  <header class="about-page__header">
+    <a routerLink="/" class="about-page__back">← Retour au planning</a>
+    <h1 class="about-page__title">À propos</h1>
+    <p class="about-page__subtitle">
+      Application personnelle de planification de repas, entièrement locale.
+    </p>
+  </header>
+
+  <article class="about-page__content">
+    <section class="about-page__section" aria-labelledby="about-purpose-heading">
+      <h2 id="about-purpose-heading" class="about-page__section-title">Objectif</h2>
+      <p>
+        Ce planificateur vous aide à organiser vos déjeuners et dîners sur une semaine,
+        à créer ou importer des recettes, et à générer une liste de courses agrégée
+        selon le nombre de portions prévues.
+      </p>
+    </section>
+
+    <section class="about-page__section" aria-labelledby="about-features-heading">
+      <h2 id="about-features-heading" class="about-page__section-title">Fonctionnalités</h2>
+      <ul class="about-page__list">
+        <li>Grille hebdomadaire (7 jours × 2 repas : midi et soir)</li>
+        <li>Création de recettes avec ingrédients quantifiés</li>
+        <li>Import de recettes via l'API publique TheMealDB</li>
+        <li>Liste de courses dynamique avec cases à cocher</li>
+        <li>Ajustement des portions par créneau</li>
+        <li>Persistance locale dans le navigateur (localStorage)</li>
+      </ul>
+    </section>
+
+    <section class="about-page__section" aria-labelledby="about-privacy-heading">
+      <h2 id="about-privacy-heading" class="about-page__section-title">Confidentialité</h2>
+      <p>
+        Aucune donnée n'est envoyée vers un serveur tiers : pas de compte, pas de cloud,
+        pas de télémétrie. Seules les requêtes vers TheMealDB sont effectuées lors d'un
+        import de recette. Vos recettes et votre planning restent sur votre appareil.
+      </p>
+    </section>
+
+    <section class="about-page__section" aria-labelledby="about-stack-heading">
+      <h2 id="about-stack-heading" class="about-page__section-title">Technologies</h2>
+      <p>
+        Application construite avec Angular (composants standalone), signals pour l'état
+        réactif, Reactive Forms et SCSS. Les données sont stockées localement via
+        localStorage.
+      </p>
+    </section>
+  </article>
+</main>

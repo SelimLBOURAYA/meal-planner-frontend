@@ -1,0 +1,82 @@
+<div class="login-page">
+  <div class="login-card">
+    <div class="login-header">
+      <span class="login-logo">🍽️</span>
+      <h1>Planificateur de repas</h1>
+      <p>{{ isRegisterMode() ? 'Créer un compte' : 'Connexion' }}</p>
+    </div>
+
+    @if (errorMessage()) {
+      <div class="alert alert-error" role="alert">
+        {{ errorMessage() }}
+      </div>
+    }
+
+    <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+      @if (isRegisterMode()) {
+        <div class="field">
+          <label for="name">Nom</label>
+          <input
+            id="name"
+            type="text"
+            formControlName="name"
+            placeholder="Votre prénom"
+            autocomplete="name"
+          />
+        </div>
+      }
+
+      <div class="field">
+        <label for="email">E-mail</label>
+        <input
+          id="email"
+          type="email"
+          formControlName="email"
+          placeholder="email@exemple.com"
+          autocomplete="email"
+        />
+        @if (form.controls.email.touched && form.controls.email.hasError('required')) {
+          <span class="field-error">L'e-mail est requis.</span>
+        }
+        @if (form.controls.email.touched && form.controls.email.hasError('email')) {
+          <span class="field-error">Format d'e-mail invalide.</span>
+        }
+      </div>
+
+      <div class="field">
+        <label for="password">Mot de passe</label>
+        <input
+          id="password"
+          type="password"
+          formControlName="password"
+          placeholder="••••••"
+          autocomplete="current-password"
+        />
+        @if (form.controls.password.touched && form.controls.password.hasError('required')) {
+          <span class="field-error">Le mot de passe est requis.</span>
+        }
+        @if (form.controls.password.touched && form.controls.password.hasError('minlength')) {
+          <span class="field-error">8 caractères minimum.</span>
+        }
+      </div>
+
+      <button type="submit" class="btn-primary" [disabled]="isLoading()">
+        @if (isLoading()) {
+          Connexion en cours…
+        } @else {
+          {{ isRegisterMode() ? 'Créer un compte' : 'Se connecter' }}
+        }
+      </button>
+    </form>
+
+    <div class="login-footer">
+      @if (isRegisterMode()) {
+        Déjà un compte ?
+        <button type="button" class="btn-link" (click)="toggleMode()">Se connecter</button>
+      } @else {
+        Pas encore de compte ?
+        <button type="button" class="btn-link" (click)="toggleMode()">S'inscrire</button>
+      }
+    </div>
+  </div>
+</div>
